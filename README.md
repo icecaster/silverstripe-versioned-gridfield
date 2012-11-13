@@ -1,6 +1,7 @@
 silverstripe-versioned-gridfield
-(well, its just a detailform)
 ===============================
+(well, its more a detailform, but who searches for silverstripe versioned gridfield detail form)
+
 
 ## Requirements
 
