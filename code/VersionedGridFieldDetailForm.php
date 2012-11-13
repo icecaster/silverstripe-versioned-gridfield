@@ -1,4 +1,11 @@
 <?php
+/**
+ * VersionedGridFieldDetailForm & VersionedGridFieldDetailForm_ItemRequest
+ * Allows managing versioned objects through gridfield.
+ * See README for details 
+ *
+ * @author Tim Klein, Dodat Ltd <tim[at]dodat[dot]co[dot]nz>
+ */
 
 class VersionedGridFieldDetailForm extends GridFieldDetailForm {
 	
