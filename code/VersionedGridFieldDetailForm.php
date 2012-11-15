@@ -38,10 +38,16 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 			return false;
 
 		$record = $this->record;
-
-		return (DB::query("SELECT \"ID\" FROM \"{$record->ClassName}_Live\" WHERE \"ID\" = $record->ID")->value())
+		
+		return (DB::query("SELECT \"ID\" FROM \"{$this->baseTable()}_Live\" WHERE \"ID\" = $record->ID")->value())
 			? true
 			: false;
+	}
+
+	function baseTable() {
+		$record = $this->record;
+		$classes = ClassInfo::dataClassesFor($record->ClassName);
+		return array_pop($classes);
 	}
 
 	function canPublish() {
@@ -218,7 +224,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$clone->deleteFromStage("Stage");
 		$clone->delete();
 		//manually deleting all orphaned _version records
-		DB::query("DELETE FROM \"{$record->class}_versions\" WHERE \"{$record->class}_versions\".\"RecordID\" = '{$record->ID}'");
+		DB::query("DELETE FROM \"{$this->baseTable()}_versions\" WHERE \"RecordID\" = '{$record->ID}'");
 		return $controller->redirect($noActionURL, 302); //redirect back to admin section
 	}
 
@@ -231,10 +237,10 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$record = $this->record;
 		// if no record can be found on draft stage (meaning it has been "deleted from draft" before),
 		// create an empty record
-		if(!DB::query("SELECT \"ID\" FROM \"{$record->class}\" WHERE \"ID\" = $record->ID")->value()) {
+		if(!DB::query("SELECT \"ID\" FROM \"{$this->baseTable()}\" WHERE \"ID\" = $record->ID")->value()) {
 			$conn = DB::getConn();
 			if(method_exists($conn, 'allowPrimaryKeyEditing')) $conn->allowPrimaryKeyEditing($record->class, true);
-			DB::query("INSERT INTO \"{$record->class}\" (\"ID\") VALUES ($this->ID)");
+			DB::query("INSERT INTO \"{$this->baseTable()}\" (\"ID\") VALUES ($this->ID)");
 			if(method_exists($conn, 'allowPrimaryKeyEditing')) $conn->allowPrimaryKeyEditing($record->class, false);
 		}
 		
