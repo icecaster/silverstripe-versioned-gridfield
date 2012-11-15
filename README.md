@@ -1,4 +1,4 @@
-silverstripe-versioned-gridfield
+silverstripe-versioned-gridfield / Versioned Model Admin
 ===============================
 (well, its more a detailform, but who searches for silverstripe versioned gridfield detail form)
 
@@ -13,28 +13,7 @@ This module provides a gridfield detail form, with the asscoiated actions requir
 
 This comes in handy especially when using a modeladmin to manage parts of the sitetree.
 
-Add this to your modeladmin to get the magic going:
-
-
-	function getEditForm($id = null, $fields = null) {
-		$form = parent::getEditForm();
-
-		$fieldList = $form->Fields();
-
-		foreach($fieldList as $field) {
-			if($field instanceof GridField) {
-				$class = $field->getList()->dataClass();
-				if(Object::has_extension($class, "Versioned")) {
-					$config = $field->getConfig();
-					$config->removeComponentsByType('GridFieldDeleteAction')
-						->removeComponentsByType('GridFieldDetailForm')
-						->addComponents(new VersionedGridFieldDetailForm());
-					$field->setConfig($config);
-				}
-			}
-		}
-		return $form;
-	}
+It hooks into modeladmin via updateEditForm and inserts the VersionedDetailForm automatically
 	
 ## Disclaimer
 
