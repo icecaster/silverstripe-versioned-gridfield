@@ -1,0 +1,12 @@
+{
+  "name": "icecaster/versioned-gridfield",
+  "type": "silverstripe-module",
+	"description": "VersionedGridFieldDetailForm, for managing Sitetree (or any other versioned objects) in CMS interfaces, such as ModelAdmin",
+	"keywords": ["silverstripe", "gridfield", "blog"],
+	"require": 
+	{
+		"php": ">=5.3.2",
+		"silverstripe/framework": "3.*",
+		"silverstripe/cms": "3.*"
+	}
+}
