@@ -70,6 +70,10 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		return $this->record->canDelete();
 	}
 
+	function canPreview() {
+		return (in_array('CMSPreviewable', class_implements($this->record)));
+	}
+
 	function getCMSActions() {
 
 		$record = $this->record;
@@ -122,6 +126,18 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 				FormAction::create('doPublish', _t('SiteTree.BUTTONSAVEPUBLISH', 'Save & Publish'))
 					->setUseButtonTag(true)->addExtraClass('ss-ui-action-constructive')->setAttribute('data-icon', 'accept')
 			);
+		}
+
+		// This is a bit hacky, however from what I understand ModelAdmin / GridField dont use the SilverStripe navigator, this will do for now just fine.
+		if($this->canPreview()) {
+			$actions->push(
+				LiteralField::create("preview", 
+					sprintf("<a href=\"%s\" class=\"ss-ui-button\" data-icon=\"preview\" target=\"_blank\">%s &raquo;</a>",
+						$this->record->Link()."?stage=Stage",
+						_t('LeftAndMain.PreviewButton', 'Preview')
+					)
+				)
+			);	
 		}
 		
 		return $actions;
