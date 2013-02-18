@@ -71,7 +71,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 	}
 
 	function canPreview() {
-		return (in_array('CMSPreviewable', class_implements($this->record)));
+		return (in_array('CMSPreviewable', class_implements($this->record)) && !$this->isNew());
 	}
 
 	function getCMSActions() {
