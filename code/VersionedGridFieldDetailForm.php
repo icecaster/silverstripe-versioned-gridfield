@@ -13,6 +13,12 @@ class VersionedGridFieldDetailForm extends GridFieldDetailForm {
 
 class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemRequest {
 
+	private static $allowed_actions = array(
+		'edit',
+		'view',
+		'ItemEditForm'
+	);
+	
 	function isNew() {
 		/**
 		 * This check was a problem for a self-hosted site, and may indicate a
@@ -143,7 +149,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		return $actions;
 	}
 
-	function ItemEditForm() {
+	public function ItemEditForm() {
 		$form = parent::ItemEditForm();
 		$actions = $this->getCMSActions();
 

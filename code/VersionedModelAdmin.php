@@ -9,13 +9,12 @@
 class VersionedModelAdmin extends Extension {
 
 	function updateEditForm($form) {
-
 		$fieldList = $form->Fields();
 
 		foreach($fieldList as $field) {
 			if($field instanceof GridField) {
 				$class = $field->getList()->dataClass();
-				if(Object::has_extension($class, "Versioned")) {
+				if($class::has_extension("Versioned")) {
 					$config = $field->getConfig();
 					$config->removeComponentsByType('GridFieldDeleteAction')
 						->removeComponentsByType('GridFieldDetailForm')
