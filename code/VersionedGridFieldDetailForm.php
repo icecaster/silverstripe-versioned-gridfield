@@ -13,6 +13,12 @@ class VersionedGridFieldDetailForm extends GridFieldDetailForm {
 
 class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemRequest {
 
+	private static $allowed_actions = array(
+		'edit',
+		'view',
+		'ItemEditForm'
+	);
+	
 	function isNew() {
 		/**
 		 * This check was a problem for a self-hosted site, and may indicate a
@@ -71,7 +77,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 	}
 
 	function canPreview() {
-		return (in_array('CMSPreviewable', class_implements($this->record)) && !$this->isNew());
+	  return ($this->record->canPreview() && !$this->isNew());
 	}
 
 	function getCMSActions() {
@@ -127,9 +133,10 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 					->setUseButtonTag(true)->addExtraClass('ss-ui-action-constructive')->setAttribute('data-icon', 'accept')
 			);
 		}
-
 		// This is a bit hacky, however from what I understand ModelAdmin / GridField dont use the SilverStripe navigator, this will do for now just fine.
 		if($this->canPreview()) {
+		  //Ensure Link method is defined & non-null before allowing preview
+		  if(method_exists($this->record, 'Link') && $this->record->Link()){
 			$actions->push(
 				LiteralField::create("preview", 
 					sprintf("<a href=\"%s\" class=\"ss-ui-button\" data-icon=\"preview\" target=\"_blank\">%s &raquo;</a>",
@@ -139,11 +146,12 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 				)
 			);	
 		}
+		}
 		
 		return $actions;
 	}
 
-	function ItemEditForm() {
+	public function ItemEditForm() {
 		$form = parent::ItemEditForm();
 		$actions = $this->getCMSActions();
 
@@ -167,7 +175,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$message = sprintf(
 			_t('GridFieldDetailForm.Published', 'Published %s %s'),
 			$this->record->singular_name(),
-			'<a href="' . $this->Link('edit') . '">"' . htmlspecialchars($this->record->Title, ENT_QUOTES) . '"</a>'
+			'"'.htmlspecialchars($this->record->Title, ENT_QUOTES).'"'
 		);
 		
 		$form->sessionMessage($message, 'good');
@@ -190,7 +198,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$message = sprintf(
 			'Unpublished %s %s',
 			$this->record->singular_name(),
-			'<a href="' . $this->Link('edit') . '">"' . htmlspecialchars($this->record->Title, ENT_QUOTES) . '"</a>'
+			'"'.htmlspecialchars($this->record->Title, ENT_QUOTES).'"'
 		);
 		$form->sessionMessage($message, 'good');
 		return $this->edit(Controller::curr()->getRequest());
@@ -203,8 +211,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		//$clone = clone $record;
 		$record->publish("Live", "Stage", false);
 		//$record->writeWithoutVersion();
-
-		$message = "Cancelled Draft changes for <a href=\"".$this->Link('edit')."\">{$record->Title}</a>";
+		$message = "Cancelled Draft changes for \"".htmlspecialchars($record->Title, ENT_QUOTES)."\"";
 		
 		$form->sessionMessage($message, 'good');
 		return Controller::curr()->redirect($this->Link('edit'));
@@ -227,7 +234,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$message = sprintf(
 			_t('GridFieldDetailForm.Deleted', 'Deleted %s %s'),
 			$this->record->singular_name(),
-			'<a href="' . $this->Link('edit') . '">"' . htmlspecialchars($this->record->Title, ENT_QUOTES) . '"</a>'
+			'"'.htmlspecialchars($this->record->Title, ENT_QUOTES).'"'
 		);
 
 		$form->sessionMessage($message, 'good');
