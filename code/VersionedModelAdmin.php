@@ -8,8 +8,11 @@
  */
 class VersionedModelAdmin extends Extension {
 
-	function updateEditForm($form) {
+	function onBeforeInit() {
 		Versioned::reading_stage('Stage');
+	}
+
+	function updateEditForm($form) {
 		$fieldList = $form->Fields();
 
 		foreach($fieldList as $field) {
