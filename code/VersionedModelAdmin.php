@@ -9,6 +9,7 @@
 class VersionedModelAdmin extends Extension {
 
 	function updateEditForm($form) {
+		Versioned::reading_stage('Stage');
 		$fieldList = $form->Fields();
 
 		foreach($fieldList as $field) {
