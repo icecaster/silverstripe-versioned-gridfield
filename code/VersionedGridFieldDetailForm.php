@@ -246,7 +246,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$form->sessionMessage($message, 'good');
 
 		$controller = Controller::curr();
-		$noActionURL = $controller->removeAction($data['url']);
+		$noActionURL = $controller->removeAction($data['BackURL']);
 		$controller->getRequest()->addHeader('X-Pjax', 'Content'); // Force a content refresh
 		//double check that this deletes all versions
 
