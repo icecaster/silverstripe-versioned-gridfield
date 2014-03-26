@@ -8,6 +8,28 @@
  */
 
 class VersionedGridFieldDetailForm extends GridFieldDetailForm {
+
+	public function handleItem($gridField, $request) {
+		$controller = $gridField->getForm()->Controller();
+
+		//resetting datalist on gridfield to ensure edited object is in list
+		//this was causing errors when the modified object was no longer in the results
+		$list = $gridField->getList();
+		$list = $list->setDataQuery(new DataQuery($list->dataClass()));
+
+		if(is_numeric($request->param('ID'))) {
+			$record = $list->byId($request->param("ID"));
+		} else {
+			$record = Object::create($gridField->getModelClass());	
+		}
+
+		$class = $this->getItemRequestClass();
+
+		$handler = Object::create($class, $gridField, $this, $record, $controller, $this->name);
+		$handler->setTemplate($this->template);
+
+		return $handler->handleRequest($request, DataModel::inst());
+	}
 	
 }
 
