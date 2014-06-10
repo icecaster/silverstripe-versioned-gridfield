@@ -66,8 +66,8 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 			return false;
 
 		$record = $this->record;
-		
-		return (DB::query("SELECT \"ID\" FROM \"{$this->baseTable()}_Live\" WHERE \"ID\" = $record->ID")->value())
+
+		return Versioned::get_by_stage($this->baseTable(), 'Live')->byID($record->ID)
 			? true
 			: false;
 	}
@@ -289,7 +289,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$record = $this->record;
 		// if no record can be found on draft stage (meaning it has been "deleted from draft" before),
 		// create an empty record
-		if(!DB::query("SELECT \"ID\" FROM \"{$this->baseTable()}\" WHERE \"ID\" = $record->ID")->value()) {
+		if(!Versioned::get_by_stage($this->baseTable(), 'Stage')->byID($record->ID)) {
 			$conn = DB::getConn();
 			if(method_exists($conn, 'allowPrimaryKeyEditing')) $conn->allowPrimaryKeyEditing($record->class, true);
 			DB::query("INSERT INTO \"{$this->baseTable()}\" (\"ID\") VALUES ($this->ID)");
