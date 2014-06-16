@@ -198,7 +198,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$form->saveInto($record);
 		$record->write();
 		$this->gridField->getList()->add($record);
-		$record->publish("Stage", "Live");
+		$record->doPublish();
 
 		$message = sprintf(
 			_t('GridFieldDetailForm.Published', 'Published %s %s'),
