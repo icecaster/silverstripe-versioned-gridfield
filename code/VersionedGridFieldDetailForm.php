@@ -66,8 +66,8 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 			return false;
 
 		$record = $this->record;
-		
-		return (DB::query("SELECT \"ID\" FROM \"{$this->baseTable()}_Live\" WHERE \"ID\" = $record->ID")->value())
+
+		return Versioned::get_by_stage($this->baseTable(), 'Live')->byID($record->ID)
 			? true
 			: false;
 	}
@@ -175,7 +175,9 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 			);	
 		}
 		}
-		
+
+		$this->extend('updateCMSActions', $actions);
+
 		return $actions;
 	}
 
@@ -198,12 +200,19 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$form->saveInto($record);
 		$record->write();
 		$this->gridField->getList()->add($record);
-		$record->publish("Stage", "Live");
+
+		// use doPublish if it's defined on the object (like SiteTree) which
+		// includes extension calls.
+		if($record->hasMethod('doPublish')) {
+			$record->doPublish();
+		} else {
+			$record->publish('Stage', 'Live');
+		}
 
 		$message = sprintf(
 			_t('GridFieldDetailForm.Published', 'Published %s %s'),
 			$this->record->singular_name(),
-			'"'.htmlspecialchars($this->record->Title, ENT_QUOTES).'"'
+			'"'.Convert::raw2xml($this->record->Title).'"'
 		);
 		
 		$form->sessionMessage($message, 'good');
@@ -226,7 +235,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$message = sprintf(
 			'Unpublished %s %s',
 			$this->record->singular_name(),
-			'"'.htmlspecialchars($this->record->Title, ENT_QUOTES).'"'
+			'"'.Convert::raw2xml($this->record->Title).'"'
 		);
 		$form->sessionMessage($message, 'good');
 		return $this->edit(Controller::curr()->getRequest());
@@ -239,7 +248,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		//$clone = clone $record;
 		$record->publish("Live", "Stage", false);
 		//$record->writeWithoutVersion();
-		$message = "Cancelled Draft changes for \"".htmlspecialchars($record->Title, ENT_QUOTES)."\"";
+		$message = "Cancelled Draft changes for \"".Convert::raw2xml($record->Title)."\"";
 		
 		$form->sessionMessage($message, 'good');
 		return Controller::curr()->redirect($this->Link('edit'));
@@ -262,7 +271,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$message = sprintf(
 			_t('GridFieldDetailForm.Deleted', 'Deleted %s %s'),
 			$this->record->singular_name(),
-			'"'.htmlspecialchars($this->record->Title, ENT_QUOTES).'"'
+			'"'.Convert::raw2xml($this->record->Title).'"'
 		);
 
 		$form->sessionMessage($message, 'good');
@@ -289,7 +298,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$record = $this->record;
 		// if no record can be found on draft stage (meaning it has been "deleted from draft" before),
 		// create an empty record
-		if(!DB::query("SELECT \"ID\" FROM \"{$this->baseTable()}\" WHERE \"ID\" = $record->ID")->value()) {
+		if(!Versioned::get_by_stage($this->baseTable(), 'Stage')->byID($record->ID)) {
 			$conn = DB::getConn();
 			if(method_exists($conn, 'allowPrimaryKeyEditing')) $conn->allowPrimaryKeyEditing($record->class, true);
 			DB::query("INSERT INTO \"{$this->baseTable()}\" (\"ID\") VALUES ($this->ID)");
