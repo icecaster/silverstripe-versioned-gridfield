@@ -200,7 +200,14 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$form->saveInto($record);
 		$record->write();
 		$this->gridField->getList()->add($record);
-		$record->doPublish();
+
+		// use doPublish if it's defined on the object (like SiteTree) which
+		// includes extension calls.
+		if($record->hasMethod('doPublish')) {
+			$record->doPublish();
+		} else {
+			$record->publish('Stage', 'Live');
+		}
 
 		$message = sprintf(
 			_t('GridFieldDetailForm.Published', 'Published %s %s'),
