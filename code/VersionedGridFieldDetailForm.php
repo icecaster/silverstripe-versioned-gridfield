@@ -273,20 +273,19 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 			$this->record->singular_name(),
 			'"'.Convert::raw2xml($this->record->Title).'"'
 		);
+		// due to redirect back this isn't shown until too late.
+		//$form->sessionMessage($message, 'good');
 
-		$form->sessionMessage($message, 'good');
-
-		$controller = Controller::curr();
-		$noActionURL = $controller->removeAction($data['BackURL']);
-		$controller->getRequest()->addHeader('X-Pjax', 'Content'); // Force a content refresh
 		//double check that this deletes all versions
-
 		$clone = clone $record;
 		$clone->deleteFromStage("Stage");
 		$clone->delete();
 		//manually deleting all orphaned _version records
 		DB::query("DELETE FROM \"{$this->baseTable()}_versions\" WHERE \"RecordID\" = '{$record->ID}'");
-		return $controller->redirect($noActionURL, 302); //redirect back to admin section
+		
+		$controller = $this->getToplevelController();
+		$controller->getRequest()->addHeader('X-Pjax', 'Content'); // Force a content refresh
+		return $controller->redirect($this->getBacklink(), 302); //redirect back to admin section
 	}
 
 
