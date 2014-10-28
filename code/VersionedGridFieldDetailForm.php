@@ -31,7 +31,6 @@ class VersionedGridFieldDetailForm extends GridFieldDetailForm {
 		// if no validator has been set on the GridField and the record has a
 		// CMS validator, use that.
 		if(!$this->getValidator() && method_exists($record, 'getCMSValidator')) {
-			var_dump('yay');
 			$this->setValidator($record->getCMSValidator());
 		}
 
