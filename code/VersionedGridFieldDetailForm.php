@@ -81,7 +81,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 	function baseTable() {
 		$record = $this->record;
 		$classes = ClassInfo::dataClassesFor($record->ClassName);
-		return array_pop($classes);
+		return array_shift($classes);
 	}
 
 	function canPublish() {
