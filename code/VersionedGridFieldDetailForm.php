@@ -129,7 +129,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		if($this->isPublished() && $this->canPublish() && !$this->IsDeletedFromStage && $this->canDeleteFromLive()) {
 			// "unpublish"
 			$minorActions->push(
-				FormAction::create('doUnpublish', _t('SiteTree.BUTTONUNPUBLISH', 'Unpublish'), 'delete')
+				FormAction::create('doUnpublish', _t('SiteTree.BUTTONUNPUBLISH', 'Unpublish'))
 					->setUseButtonTag(true)->setDescription("Remove this {$classname} from the published site")
 					->addExtraClass('ss-ui-action-destructive')->setAttribute('data-icon', 'unpublish')
 			);
@@ -139,7 +139,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 			if($this->isPublished() && $this->canEdit())	{
 				// "rollback"
 				$minorActions->push(
-					FormAction::create('doRollback', 'Cancel draft changes', 'delete')
+					FormAction::create('doRollback', 'Cancel draft changes')
 						->setUseButtonTag(true)->setDescription(_t('SiteTree.BUTTONCANCELDRAFTDESC', 'Delete your draft and revert to the currently published page'))
 				);
 			}
