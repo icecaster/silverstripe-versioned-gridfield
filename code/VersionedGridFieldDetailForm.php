@@ -107,7 +107,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 	function canPreview() {
 		$can = false;
 		$can = in_array('CMSPreviewable', class_implements($this->record));
-		if(method_exists("canPreview", $this->record)) {
+		if(method_exists($this->record, "canPreview")) {
 			$can = $this->record->canPreview();
 		}
 
