@@ -226,22 +226,25 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 	}
 
 
+
 	public function doUnpublish($data, $form) {
 		$record = $this->record;
 
 		if($record && !$record->canPublish())
 			return Security::permissionFailure($this);
 
+		$record->invokeWithExtensions('onBeforeUnpublish', $record);
+		
 		$origStage = Versioned::current_stage();
-		Versioned::reading_stage('Live');
+		$record->deleteFromStage("Live");
+		Versioned::reading_stage($origStage);
 
-		// This way our ID won't be unset
-		$clone = clone $record;
-		$clone->delete();
+		$record->invokeWithExtensions('onAfterUnpublish', $record);
+
 		$message = sprintf(
 			'Unpublished %s %s',
-			$this->record->singular_name(),
-			'"'.Convert::raw2xml($this->record->Title).'"'
+			$record->singular_name(),
+			'"'.Convert::raw2xml($record->Title).'"'
 		);
 		$form->sessionMessage($message, 'good');
 		return $this->edit(Controller::curr()->getRequest());
