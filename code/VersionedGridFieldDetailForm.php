@@ -110,82 +110,86 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		if(method_exists($this->record, "canPreview")) {
 			$can = $this->record->canPreview();
 		}
-
 		return ($can && !$this->isNew());
 	}
+	
 
-	function getCMSActions() {
+	public function getCMSActions() {
 
 		$record = $this->record;
 		$classname = $record->class;
 
-		$minorActions = CompositeField::create()->setTag('fieldset')->addExtraClass('ss-ui-buttonset');
-		$actions = new FieldList($minorActions);
+		$minorActions = CompositeField::create()
+			->setTag('fieldset')
+			->addExtraClass('ss-ui-buttonset');
 
+		$actions = new FieldList($minorActions);
 
 		$this->IsDeletedFromStage = $this->getIsDeletedFromStage();
 		$this->ExistsOnLive = $this->getExistsOnLive();
 
 		if($this->isPublished() && $this->canPublish() && !$this->IsDeletedFromStage && $this->canDeleteFromLive()) {
-			// "unpublish"
 			$minorActions->push(
-				FormAction::create('doUnpublish', _t('SiteTree.BUTTONUNPUBLISH', 'Unpublish'))
-					->setUseButtonTag(true)->setDescription("Remove this {$classname} from the published site")
-					->addExtraClass('ss-ui-action-destructive')->setAttribute('data-icon', 'unpublish')
+				FormAction::create('doUnpublish', 'Unpublish')
+					->setDescription("Remove this {$classname} from the published site")
+					->addExtraClass('ss-ui-action-destructive')
+					->setAttribute('data-icon', 'unpublish')
+					->setUseButtonTag(true)
 			);
 		}
 
 		if($this->stagesDiffer('Stage', 'Live') && !$this->IsDeletedFromStage) {
 			if($this->isPublished() && $this->canEdit())	{
-				// "rollback"
 				$minorActions->push(
 					FormAction::create('doRollback', 'Cancel draft changes')
-						->setUseButtonTag(true)->setDescription(_t('SiteTree.BUTTONCANCELDRAFTDESC', 'Delete your draft and revert to the currently published page'))
+						->setUseButtonTag(true)
 				);
 			}
 		}
 
 		if($this->canEdit()) {
 			if($this->canDelete() && !$this->isNew() && !$this->isPublished()) {
-				// "delete"
 				$minorActions->push(
-					FormAction::create('doDelete', 'Delete')->addExtraClass('delete ss-ui-action-destructive')
-						->setAttribute('data-icon', 'decline')->setUseButtonTag(true)
+					FormAction::create('doDelete', 'Delete')
+						->addExtraClass('delete ss-ui-action-destructive')
+						->setAttribute('data-icon', 'decline')
+						->setUseButtonTag(true)
 				);
 			}
 		
-			// "save"
 			$minorActions->push(
-				FormAction::create('doSave',_t('CMSMain.SAVEDRAFT','Save Draft'))->setAttribute('data-icon', 'addpage')->setUseButtonTag(true)
+				FormAction::create('doSave', 'Save Draft')
+					->setAttribute('data-icon', 'addpage')
+					->setUseButtonTag(true)
 			);
 		}
 
 		if($this->canPublish() && !$this->IsDeletedFromStage) {
-			// "publish"
 			$actions->push(
-				FormAction::create('doPublish', _t('SiteTree.BUTTONSAVEPUBLISH', 'Save & Publish'))
-					->setUseButtonTag(true)->addExtraClass('ss-ui-action-constructive')->setAttribute('data-icon', 'accept')
+				FormAction::create('doPublish', 'Save & Publish')
+					->addExtraClass('ss-ui-action-constructive')
+					->setAttribute('data-icon', 'accept')
+					->setUseButtonTag(true)
 			);
 		}
 		// This is a bit hacky, however from what I understand ModelAdmin / GridField dont use the SilverStripe navigator, this will do for now just fine.
 		if($this->canPreview()) {
-		  //Ensure Link method is defined & non-null before allowing preview
-		  if(method_exists($this->record, 'Link') && $this->record->Link()){
-			$actions->push(
-				LiteralField::create("preview", 
-					sprintf("<a href=\"%s\" class=\"ss-ui-button\" data-icon=\"preview\" target=\"_blank\">%s &raquo;</a>",
-						$this->record->Link()."?stage=Stage",
-						_t('LeftAndMain.PreviewButton', 'Preview')
+			//Ensure Link method is defined & non-null before allowing preview
+			if(method_exists($this->record, 'Link') && $this->record->Link()){
+				$actions->push(
+					LiteralField::create('preview',
+						sprintf("<a href=\"%s\" class=\"ss-ui-button\" data-icon=\"preview\" target=\"_blank\">%s &raquo;</a>",
+							$this->record->Link()."?stage=Stage", 'Preview'
+						)
 					)
-				)
-			);	
-		}
+				);	
+			}
 		}
 
 		$this->extend('updateCMSActions', $actions);
-
 		return $actions;
 	}
+
 
 	public function ItemEditForm() {
 		$form = parent::ItemEditForm();
@@ -226,7 +230,6 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 	}
 
 
-
 	public function doUnpublish($data, $form) {
 		$record = $this->record;
 
@@ -251,16 +254,18 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 	}
 	
 
-	function doRollback($data, $form) {
+	public function doRollback($data, $form) {
 		$record = $this->record;
-
-		//$clone = clone $record;
+		$record->invokeWithExtensions('onBeforeRollback', $record);
+		
 		$record->publish("Live", "Stage", false);
-		//$record->writeWithoutVersion();
+		
+		$record->invokeWithExtensions('onAfterRollback', $record);
+
 		$message = "Cancelled Draft changes for \"".Convert::raw2xml($record->Title)."\"";
 		
 		$form->sessionMessage($message, 'good');
-		return Controller::curr()->redirect($this->Link('edit'));
+		return $this->edit(Controller::curr()->getRequest());
 	}
 
 
@@ -276,14 +281,11 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 			return Controller::curr()->redirectBack();
 		}
 
-
 		$message = sprintf(
 			_t('GridFieldDetailForm.Deleted', 'Deleted %s %s'),
 			$this->record->singular_name(),
 			'"'.Convert::raw2xml($this->record->Title).'"'
 		);
-		// due to redirect back this isn't shown until too late.
-		//$form->sessionMessage($message, 'good');
 
 		//double check that this deletes all versions
 		$clone = clone $record;
@@ -292,17 +294,13 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		//manually deleting all orphaned _version records
 		DB::query("DELETE FROM \"{$this->baseTable()}_versions\" WHERE \"RecordID\" = '{$record->ID}'");
 		
-		$controller = $this->getToplevelController();
+		$controller = Controller::curr();
 		$controller->getRequest()->addHeader('X-Pjax', 'Content'); // Force a content refresh
 		return $controller->redirect($this->getBacklink(), 302); //redirect back to admin section
 	}
 
 
-		/**
-	 * Restore the content in the active copy of this SiteTree page to the stage site.
-	 * @return The SiteTree object.
-	 */
-	function doRestoreToStage() {
+	public function doRestoreToStage() {
 		$record = $this->record;
 		// if no record can be found on draft stage (meaning it has been "deleted from draft" before),
 		// create an empty record
@@ -324,18 +322,6 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		
 		return $result;
 	}
-
-	/**
-	 * Synonym of {@link doUnpublish}
-	 */
-	function doDeleteFromLive() {
-		return $this->doUnpublish();
-	}
-
-
-
-
-
 
 
 	/**
