@@ -186,7 +186,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 			}
 		}
 
-		$this->extend('updateCMSActions', $actions);
+		$record->extend('updateCMSActions', $actions);
 		return $actions;
 	}
 
