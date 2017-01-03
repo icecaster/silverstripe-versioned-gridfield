@@ -1,3 +1,0 @@
-ModelAdmin:
-  extensions:
-    - 'VersionedModelAdmin'
