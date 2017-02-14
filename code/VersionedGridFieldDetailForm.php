@@ -2,7 +2,7 @@
 /**
  * VersionedGridFieldDetailForm & VersionedGridFieldDetailForm_ItemRequest
  * Allows managing versioned objects through gridfield.
- * See README for details 
+ * See README for details
  *
  * @author Tim Klein, Dodat Ltd <tim[at]dodat[dot]co[dot]nz>
  */
@@ -15,12 +15,19 @@ class VersionedGridFieldDetailForm extends GridFieldDetailForm {
 		//resetting datalist on gridfield to ensure edited object is in list
 		//this was causing errors when the modified object was no longer in the results
 		$list = $gridField->getList();
-		$list = $list->setDataQuery(new DataQuery($list->dataClass()));
+
+		// If we are acting on an ArrayList or other list that doesnt support setDataQuery
+		// (Like if we have done a filterbyCallback on our query)
+		// This will stop the world exploding.
+
+		if (method_exists($list, 'setDataQuery')) {
+			$list = $list->setDataQuery(new DataQuery($list->dataClass()));
+		}
 
 		if(is_numeric($request->param('ID'))) {
 			$record = $list->byId($request->param("ID"));
 		} else {
-			$record = Object::create($gridField->getModelClass());	
+			$record = Object::create($gridField->getModelClass());
 		}
 
 		$class = $this->getItemRequestClass();
@@ -36,7 +43,7 @@ class VersionedGridFieldDetailForm extends GridFieldDetailForm {
 
 		return $handler->handleRequest($request, DataModel::inst());
 	}
-	
+
 }
 
 class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemRequest {
@@ -46,7 +53,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		'view',
 		'ItemEditForm'
 	);
-	
+
 	function isNew() {
 		/**
 		 * This check was a problem for a self-hosted site, and may indicate a
@@ -112,7 +119,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		}
 		return ($can && !$this->isNew());
 	}
-	
+
 
 	public function getCMSActions() {
 
@@ -156,7 +163,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 						->setUseButtonTag(true)
 				);
 			}
-		
+
 			$minorActions->push(
 				FormAction::create('doSave', 'Save Draft')
 					->setAttribute('data-icon', 'addpage')
@@ -182,7 +189,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 							$this->record->Link()."?stage=Stage", 'Preview'
 						)
 					)
-				);	
+				);
 			}
 		}
 
@@ -224,7 +231,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 			$this->record->singular_name(),
 			'"'.Convert::raw2xml($this->record->Title).'"'
 		);
-		
+
 		$form->sessionMessage($message, 'good');
 		return $this->edit(Controller::curr()->getRequest());
 	}
@@ -237,7 +244,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 			return Security::permissionFailure($this);
 
 		$record->invokeWithExtensions('onBeforeUnpublish', $record);
-		
+
 		$origStage = Versioned::current_stage();
 		$record->deleteFromStage("Live");
 		Versioned::reading_stage($origStage);
@@ -252,18 +259,18 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$form->sessionMessage($message, 'good');
 		return $this->edit(Controller::curr()->getRequest());
 	}
-	
+
 
 	public function doRollback($data, $form) {
 		$record = $this->record;
 		$record->invokeWithExtensions('onBeforeRollback', $record);
-		
+
 		$record->publish("Live", "Stage", false);
-		
+
 		$record->invokeWithExtensions('onAfterRollback', $record);
 
 		$message = "Cancelled Draft changes for \"".Convert::raw2xml($record->Title)."\"";
-		
+
 		$form->sessionMessage($message, 'good');
 		return $this->edit(Controller::curr()->getRequest());
 	}
@@ -293,7 +300,7 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		$clone->delete();
 		//manually deleting all orphaned _version records
 		DB::query("DELETE FROM \"{$this->baseTable()}_versions\" WHERE \"RecordID\" = '{$record->ID}'");
-		
+
 		$controller = Controller::curr();
 		$controller->getRequest()->addHeader('X-Pjax', 'Content'); // Force a content refresh
 		return $controller->redirect($this->getBacklink(), 302); //redirect back to admin section
@@ -310,16 +317,16 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 			DB::query("INSERT INTO \"{$this->baseTable()}\" (\"ID\") VALUES ($this->ID)");
 			if(method_exists($conn, 'allowPrimaryKeyEditing')) $conn->allowPrimaryKeyEditing($record->class, false);
 		}
-		
+
 		$oldStage = Versioned::current_stage();
 		Versioned::reading_stage('Stage');
 		$record->forceChange();
 		$record->write();
-		
+
 		$result = DataObject::get_by_id($this->class, $this->ID);
-		
+
 		Versioned::reading_stage($oldStage);
-		
+
 		return $result;
 	}
 
@@ -328,19 +335,19 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 	 * Compares current draft with live version,
 	 * and returns TRUE if no draft version of this page exists,
 	 * but the page is still published (after triggering "Delete from draft site" in the CMS).
-	 * 
+	 *
 	 * @return boolean
 	 */
 	function getIsDeletedFromStage() {
 		//if(!$this->record->ID) return true;
 		if($this->isNew()) return false;
-		
+
 		$stageVersion = Versioned::get_versionnumber_by_stage($this->record->class, 'Stage', $this->record->ID);
 
 		// Return true for both completely deleted pages and for pages just deleted from stage.
 		return !($stageVersion);
 	}
-	
+
 	/**
 	 * Return true if this page exists on the live site
 	 */
@@ -352,35 +359,35 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 	 * Compares current draft with live version,
 	 * and returns TRUE if these versions differ,
 	 * meaning there have been unpublished changes to the draft site.
-	 * 
+	 *
 	 * @return boolean
 	 */
 	public function getIsModifiedOnStage() {
 		// new unsaved pages could be never be published
 		if($this->isNew()) return false;
-		
+
 		$stageVersion = Versioned::get_versionnumber_by_stage($this->record->class, 'Stage', $this->record->ID);
 		$liveVersion =	Versioned::get_versionnumber_by_stage($this->record->class, 'Live', $this->record->ID);
 
 		return ($stageVersion && $stageVersion != $liveVersion);
 	}
-	
+
 	/**
 	 * Compares current draft with live version,
 	 * and returns true if no live version exists,
 	 * meaning the page was never published.
-	 * 
+	 *
 	 * @return boolean
 	 */
 	public function getIsAddedToStage() {
 		// new unsaved pages could be never be published
 		if($this->isNew()) return false;
-		
+
 		$stageVersion = Versioned::get_versionnumber_by_stage($this->record->class, 'Stage', $this->record->ID);
 		$liveVersion =	Versioned::get_versionnumber_by_stage($this->record->class, 'Live', $this->record->ID);
 
 		return ($stageVersion && !$liveVersion);
 	}
-	
+
 
 }
