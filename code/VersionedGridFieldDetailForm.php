@@ -183,10 +183,16 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 		if($this->canPreview()) {
 			//Ensure Link method is defined & non-null before allowing preview
 			if(method_exists($this->record, 'Link') && $this->record->Link()){
+
+				$subsiteString = '';
+				if(class_exists(Subsite::class) && singleton($this->owner->modelClass)->hasDatabaseField('SubsiteID')){
+					$subsiteString = '&SubsiteID=' . Subsite::currentSubsiteID();
+				}
+
 				$actions->push(
 					LiteralField::create('preview',
 						sprintf("<a href=\"%s\" class=\"ss-ui-button\" data-icon=\"preview\" target=\"_blank\">%s &raquo;</a>",
-							$this->record->Link()."?stage=Stage", 'Preview'
+							$this->record->Link()."?stage=Stage".$subsiteString, 'Preview'
 						)
 					)
 				);
