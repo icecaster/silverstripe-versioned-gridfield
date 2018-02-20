@@ -215,13 +215,32 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 
 	public function doPublish($data, $form)	{
 		$record = $this->record;
-
 		if($record && !$record->canPublish()) {
 			return Security::permissionFailure($this);
 		}
 
-		$form->saveInto($record);
-		$record->write();
+		//Code from core GridFieldDetailForm to handle ValidationExceptions on save/write
+		$controller = Controller::curr();
+                $form->saveInto($record);
+		try {
+                  $record->write();
+		} catch(ValidationException $e) {
+			$form->sessionMessage($e->getResult()->message(), 'bad');
+			$responseNegotiator = new PjaxResponseNegotiator(array(
+										 'CurrentForm' => function() use(&$form) {
+											 return $form->forTemplate();
+										 },
+										 'default' => function() use(&$controller) {
+											 return $controller->redirectBack();
+										 }
+                                                                         ));
+			if($controller->getRequest()->isAjax()){
+				$controller->getRequest()->addHeader('X-Pjax', 'CurrentForm');
+			}
+			return $responseNegotiator->respond($controller->getRequest());
+		}
+                //
+
 		$this->gridField->getList()->add($record);
 
 		// use doPublish if it's defined on the object (like SiteTree) which
