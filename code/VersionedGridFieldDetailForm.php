@@ -207,6 +207,20 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 	public function ItemEditForm() {
 		$form = parent::ItemEditForm();
 		$actions = $this->getCMSActions();
+        
+        // Support for nested Versioned GridField's
+		// Detect any GridFields, if managing a Versioned DataObject apply VersionedGridFieldDetailForm
+		foreach ($form->Fields()->dataFields() as $field) {
+			if ($field instanceof GridField) {
+				$class = $field->getList()->dataClass();
+				if ($class::has_extension("Versioned")) {
+					$config = $field->getConfig();
+					$config->removeComponentsByType('GridFieldDetailForm')
+						->addComponents(new VersionedGridFieldDetailForm());
+					$field->setConfig($config);
+				}
+			}
+		}
 
 		$form->setActions($actions);
 		return $form;
