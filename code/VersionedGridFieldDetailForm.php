@@ -185,9 +185,11 @@ class VersionedGridFieldDetailForm_ItemRequest extends GridFieldDetailForm_ItemR
 			if(method_exists($this->record, 'Link') && $this->record->Link()){
 
 				$subsiteString = '';
-				if(class_exists(Subsite::class) && singleton($this->owner->modelClass)->hasDatabaseField('SubsiteID')){
-					$subsiteString = '&SubsiteID=' . Subsite::currentSubsiteID();
-				}
+                if (class_exists(Subsite::class) &&
+                    $this->owner->modelClass &&
+                    singleton($this->owner->modelClass)->hasDatabaseField('SubsiteID')) {
+                    $subsiteString = '&SubsiteID=' . Subsite::currentSubsiteID();
+                }
 
 				$actions->push(
 					LiteralField::create('preview',
