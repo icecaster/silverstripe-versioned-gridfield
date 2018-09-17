@@ -10,7 +10,7 @@
 class VersionedGridFieldDetailForm extends GridFieldDetailForm {
 
 	public function handleItem($gridField, $request) {
-		$controller = $gridField->getForm()->Controller();
+		$controller = $gridField->getForm()->getController();
 
 		//resetting datalist on gridfield to ensure edited object is in list
 		//this was causing errors when the modified object was no longer in the results
@@ -27,12 +27,12 @@ class VersionedGridFieldDetailForm extends GridFieldDetailForm {
 		if(is_numeric($request->param('ID'))) {
 			$record = $list->byId($request->param("ID"));
 		} else {
-			$record = Object::create($gridField->getModelClass());
+			$record = SS_Object::create($gridField->getModelClass());
 		}
 
 		$class = $this->getItemRequestClass();
 
-		$handler = Object::create($class, $gridField, $this, $record, $controller, $this->name);
+		$handler = SS_Object::create($class, $gridField, $this, $record, $controller, $this->name);
 		$handler->setTemplate($this->template);
 
 		// if no validator has been set on the GridField and the record has a
